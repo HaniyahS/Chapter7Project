@@ -3,83 +3,91 @@
 
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <string>
+#include <algorithm> // For std::count
+
 using namespace std;
 
-//Function prototype
-void getAnswers(char correctAns[], char studentAns[]);
-int getExam(char correctAns[], char studentAns[]);
-void writeReport(int totalMissed, double& percent , double result);
+// Function prototypes
+void getTeams(vector<string>& teams, vector<string>& wins);
+int findWinner(string teamName, const vector<string>& wins);
 
 int main() {
+	vector<string> teams;
+	vector<string> wins;
 
-	char correctAns[20];
-	char studentAns[20];
-	int totalMissed; 
-	double percent , result = 0;
+	// Get the teams and winners from the files
+	getTeams(teams, wins);
 
-	getAnswers(correctAns, studentAns); 
+	// Display the list of teams to the user
+	for (int i = 0; i < teams.size(); ++i) {
+		cout << teams[i] << endl;
+	}
+	cout << endl;
 
-	totalMissed = getExam(correctAns, studentAns); 
+	string teamName;
+	while (teamName != "quit") { // Loop until the user enters "quit"
+		cout << "Enter the name of a team (exactly as written above) or type 'quit' to exit: ";
+		getline(cin, teamName); // Use getline for names with spaces
 
-	writeReport(totalMissed, percent , result); 
+		if (teamName == "quit") {
+			break;
+		}
+
+		// Count the number of times the selected team has won
+		int count = findWinner(teamName, wins);
+
+		if (count > 0) {
+			cout << "\nThe " << teamName << " won the World Series " << count << " times." << endl << endl;
+		}
+		else {
+			cout << "\nThe " << teamName << " never won the World Series (or the name is misspelled)." << endl << endl;
+		}
+	}
+
+	cout << "\nGoodbye" << endl;
 
 	return 0;
 }
 
-// Function to get answers from files
-void getAnswers(char correctAns[], char studentAns[]) {
-	ifstream correctAnsFile("CorrectAnswers.txt"); 
-	ifstream studentAnsFile("StudentAnswers.txt"); 
+// Function to get teams from "Teams.txt" and winners from "WorldSeriesWinners.txt"
+void getTeams(vector<string>& teams, vector<string>& wins) {
+	ifstream teamsFile("Teams.txt");
+	ifstream winnersFile("WorldSeriesWinners.txt");
 
-	// Check if files opened successfully
-	if (!correctAnsFile.is_open()) { 
-		cout << "Couldn't find correct answer file" << endl;
-		exit; 
+	if (!teamsFile) {
+		cout << "Error opening Teams.txt" << endl;
+		exit;
 	}
 
-	if (!studentAnsFile.is_open()) { 
-		cout << "Couldn't find student answer file" << endl;
-		exit; 
+	if (!winnersFile) {
+		cout << "Error opening WorldSeriesWinners.txt" << endl;
+		exit;
 	}
 
-	// Read answers into arrays
-	for (int i = 0; i < 20; i++) { 
-		correctAnsFile >> correctAns[i];
-		studentAnsFile >> studentAns[i];
+	string line;
+	while (getline(teamsFile, line)) {
+		teams.push_back(line);
 	}
 
-	// Close files
-	correctAnsFile.close();
-	studentAnsFile.close();
+	while (getline(winnersFile, line)) {
+		wins.push_back(line);
+	}
+
+	teamsFile.close();
+	winnersFile.close();
 }
 
-// Function to compare answers and calculate missed questions
-int getExam(char correctAns[], char studentAns[]) { 
-	int totalMissed = 0; 
-
-	for (int i = 0; i < 20; i++) { 
-		if (correctAns[i] != studentAns[i]) {
-			cout << "Wrong! " << "Student's answer: " << studentAns[i] << endl;
-			cout << "The correct answer was: " << correctAns[i] << endl << endl;
-			totalMissed++; 
+// Function to count how many times a team has won
+int findWinner(string teamName, const vector<string>& wins) {
+	int count = 0;
+	// Iterate through the vector of winners and increment the count if the team name matches
+	for (int i = 0; i < wins.size(); ++i) {
+		if (teamName == wins[i]) {
+			count++;
 		}
 	}
-	return totalMissed; 
+	return count;
 }
 
-// Function to write the report
-void writeReport(int totalMissed, double& percent , double result) { 
-
-	cout << "\nThe student missed " << totalMissed << " questions" << endl;
-
-	result += (20 - totalMissed); 
-	percent = (result / 20) * 100;
-	cout << "Percentage answered correctly: " << percent << "%" << endl;
-
-	if (percent >= 70) { 
-		cout << "The student has passed the exam!\n";
-	}
-	else {
-		cout << "The student has failed the exam!\n";
-	}
-}
