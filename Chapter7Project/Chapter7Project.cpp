@@ -2,92 +2,185 @@
 //
 
 #include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <algorithm> // For std::count
+
 
 using namespace std;
 
 // Function prototypes
-void getTeams(vector<string>& teams, vector<string>& wins);
-int findWinner(string teamName, const vector<string>& wins);
+void getLocation(int& row, int& column);
+void initializeBoard(char(&board)[3][3]);
+void displayBoard(char board[3][3]);
+bool placeToken(char(&board)[3][3], int row, int column, char token);
+bool checkWin(const char(&board)[3][3], char token); // Function to check win condition
+
+
 
 int main() {
-	vector<string> teams;
-	vector<string> wins;
 
-	// Get the teams and winners from the files
-	getTeams(teams, wins);
+    int row = 0, column = 0;
+    char board[3][3];
+    int playerTurn = 0; // 0 for Player 1 (X), 1 for Player 2 (O)
+    char currentPlayerToken;
 
-	// Display the list of teams to the user
-	for (int i = 0; i < teams.size(); ++i) {
-		cout << teams[i] << endl;
-	}
-	cout << endl;
+    initializeBoard(board);
 
-	string teamName;
-	while (teamName != "quit") { // Loop until the user enters "quit"
-		cout << "Enter the name of a team (exactly as written above) or type 'quit' to exit: ";
-		getline(cin, teamName); // Use getline for names with spaces
 
-		if (teamName == "quit") {
-			break;
-		}
+    // Game loop (e.g., up to 9 turns or until a win/draw)
+    for (int turn = 0; turn < 9; ++turn) {
 
-		// Count the number of times the selected team has won
-		int count = findWinner(teamName, wins);
+        displayBoard(board);
 
-		if (count > 0) {
-			cout << "\nThe " << teamName << " won the World Series " << count << " times." << endl << endl;
-		}
-		else {
-			cout << "\nThe " << teamName << " never won the World Series (or the name is misspelled)." << endl << endl;
-		}
-	}
+        // Determine current player's token
+        if (playerTurn == 0) {
+            currentPlayerToken = 'X';
+            cout << "\nPlayer X's turn.\n";
 
-	cout << "\nGoodbye" << endl;
+        }
+        else {
 
-	return 0;
+            currentPlayerToken = 'O';
+            cout << "\nPlayer O's turn.\n";
+
+        }
+
+        getLocation(row, column);
+        placeToken(board, row, column, currentPlayerToken);
+
+
+        // Check for win condition after each move
+        if (checkWin(board, currentPlayerToken)) {
+
+            displayBoard(board);
+            std::cout << "\nPlayer " << currentPlayerToken << " wins!\n";
+            break; // Exit the game loop
+
+        }
+
+        // Check for draw condition
+        if (turn == 8) { // If it's the 9th turn and no one won
+
+            displayBoard(board);
+            std::cout << "\nIt's a draw!\n";
+            break;
+
+        }
+
+        playerTurn = 1 - playerTurn; // Switch to the other player's turn (toggles between 0 and 1)
+
+    }
+
+    return 0;
+
 }
 
-// Function to get teams from "Teams.txt" and winners from "WorldSeriesWinners.txt"
-void getTeams(vector<string>& teams, vector<string>& wins) {
-	ifstream teamsFile("Teams.txt");
-	ifstream winnersFile("WorldSeriesWinners.txt");
+void initializeBoard(char(&board)[3][3]) {
 
-	if (!teamsFile) {
-		cout << "Error opening Teams.txt" << endl;
-		exit;
-	}
+    // Correct way to initialize the array
 
-	if (!winnersFile) {
-		cout << "Error opening WorldSeriesWinners.txt" << endl;
-		exit;
-	}
+    for (int i = 0; i < 3; ++i) {
 
-	string line;
-	while (getline(teamsFile, line)) {
-		teams.push_back(line);
-	}
+        for (int j = 0; j < 3; ++j) {
 
-	while (getline(winnersFile, line)) {
-		wins.push_back(line);
-	}
+            board[i][j] = '*';
 
-	teamsFile.close();
-	winnersFile.close();
+        }
+
+    }
+
 }
 
-// Function to count how many times a team has won
-int findWinner(string teamName, const vector<string>& wins) {
-	int count = 0;
-	// Iterate through the vector of winners and increment the count if the team name matches
-	for (int i = 0; i < wins.size(); ++i) {
-		if (teamName == wins[i]) {
-			count++;
-		}
-	}
-	return count;
+void displayBoard(char board[3][3]) {
+    cout << "\t1\t2\t3"
+        << "\n\t------------------";
+
+    cout << "\n1 |\t" << board[0][0] << "\t" << board[0][1] << "\t" << board[0][2]; //add first row
+    cout << "\n\n2 |\t" << board[1][0] << "\t" << board[1][1] << "\t" << board[1][2]; //add second row
+    cout << "\n\n3 |\t" << board[2][0] << "\t" << board[2][1] << "\t" << board[2][2] << "\n"; //add third row
+
 }
 
+void getLocation(int& row, int& column) {
+    int inputRow , inputColumn;
+
+    cout << "\nEnter row: ";
+    cin >> inputRow;
+
+    while (inputRow != 3 && inputRow != 2 && inputRow != 1) {
+
+        cout << "\nError please enter 1 , 2, or 3\nEnter row: ";
+        cin >> inputRow;
+
+    }
+
+    cout << "\nEnter column: ";
+    cin >> inputColumn;
+
+    while (inputColumn != 3 && inputColumn != 2 && inputColumn != 1) {
+
+        cout << "\nError please enter 1 , 2, or 3\nEnter column: ";
+        cin >> inputColumn;
+     
+    }
+    row = inputRow;
+    column = inputColumn;
+}
+
+bool placeToken(char(&board)[3][3], int row, int column, char token) {
+
+    // Adjust for 0-based array indexing
+
+    row--;
+    column--;
+
+    // Check if the spot is already taken
+
+    if (board[row][column] == '*') {
+
+        board[row][column] = token;
+
+        return true; // Token placed successfully
+
+    }
+    else {
+
+        return false; // Spot already taken
+
+    }
+
+}
+
+
+
+bool checkWin(const char(&board)[3][3], char token) {
+    // Check rows
+    for (int i = 0; i < 3; ++i) {
+
+        if (board[i][0] == token && board[i][1] == token && board[i][2] == token) {
+
+            return true;
+
+        }
+
+    }
+
+    // Check columns
+    for (int j = 0; j < 3; ++j) {
+
+        if (board[0][j] == token && board[1][j] == token && board[2][j] == token) {
+
+            return true;
+
+        }
+
+    }
+
+    // Check diagonals
+    if ((board[0][0] == token && board[1][1] == token && board[2][2] == token) || // Top-left to bottom-right
+        (board[0][2] == token && board[1][1] == token && board[2][0] == token)) { // Top-right to bottom-left
+
+        return true;
+
+    }
+
+    return false;
+}
